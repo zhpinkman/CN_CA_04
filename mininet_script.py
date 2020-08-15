@@ -1,6 +1,7 @@
 from mininet.topo import Topo
 import random
 import threading
+import time
 from mininet.link import TCLink, Intf
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController, OVSController
@@ -11,6 +12,8 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 from subprocess import call
 
+MIN_BW = 1
+MAX_BW = 5
 
 class Topology(Topo):
     def __init__(self):
@@ -35,19 +38,29 @@ class Topology(Topo):
 
 
         # links
-        self.addLink(h1, s1, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
-        self.addLink(s2, s1, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
-        self.addLink(h2, s2, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(h1, s1, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(s2, s1, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(h2, s2, cls=TCLink, bw=1, delay='1ms',loss=0)
         # self.addLink(s2, s3)
-        self.addLink(s1, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(s1, s3, cls=TCLink, bw=1, delay='1ms',loss=0)
         # self.addLink(s2, s4)
-        self.addLink(h3, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
-        self.addLink(h4, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
-        self.addLink(s3, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
-        self.addLink(h5, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
-        self.addLink(h6, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
-        self.addLink(h7, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(h3, s3, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(h4, s3, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(s3, s4, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(h5, s4, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(h6, s4, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(h7, s4, cls=TCLink, bw=1, delay='1ms',loss=0)
 
+        self.running = True
+        # threading.Thread(target=self.change_bw_timer_task, name='TIMER_TASK1').start()
+
+    def change_bw_timer_task(self):  # runs every second
+        while self.running:
+            print(self.links)
+            for link in self.links:
+                bw = random.randint(MIN_BW, MAX_BW)
+                link.intf1.params["bw"] = bw
+            time.sleep(10)
 
 # def printit():
 #   threading.Timer(5.0, printit).start()
