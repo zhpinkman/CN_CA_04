@@ -27,6 +27,9 @@ def main():
     topo = Topology()
     net = Mininet(topo=topo, link=TCLink)
 
+    # controller
+    c0 = net.addController( 'c0', controller=RemoteController, ip='127.0.0.1', port=6633 )
+
     net.start()
     threading.Thread(target=change_bw_timer_task,
                      name='TIMER_TASK1', args=(net,)).start()
