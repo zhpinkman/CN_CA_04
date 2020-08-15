@@ -3,12 +3,12 @@ import random
 import threading
 import time
 import os
-from mininet.link import TCLink, Intf
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController, OVSController
 from mininet.node import CPULimitedHost, Host, Node
-from mininet.node import OVSKernelSwitch, UserSwitch
+from mininet.node import OVSKernelSwitch, UserSwitch, OVSSwitch
 from mininet.node import IVSSwitch
+from mininet.link import TCLink, Intf
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 from subprocess import call
@@ -27,7 +27,7 @@ def main():
     global running
     print("-------------------------HELLO-----------------------")
     topo = Topology()
-    net = Mininet(topo=topo, link=TCLink)
+    net = Mininet(topo=topo, controller=RemoteController, link=TCLink, switch=OVSSwitch)
 
     # controller
     c0 = net.addController( 'c0', controller=RemoteController, ip='127.0.0.1', port=6633 )

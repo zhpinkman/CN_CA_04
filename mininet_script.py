@@ -2,12 +2,12 @@ from mininet.topo import Topo
 import random
 import threading
 import time
-from mininet.link import TCLink, Intf
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController, OVSController
 from mininet.node import CPULimitedHost, Host, Node
 from mininet.node import OVSKernelSwitch, UserSwitch
 from mininet.node import IVSSwitch
+from mininet.link import TCLink, Intf
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 from subprocess import call
