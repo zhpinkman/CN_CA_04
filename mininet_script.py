@@ -1,7 +1,7 @@
 from mininet.topo import Topo
 
 
-class topology(Topo):
+class CN_final(Topo):
     def __init__(self):
         Topo.__init__(self)
         
@@ -20,3 +20,23 @@ class topology(Topo):
         s2 = self.addSwitch('s2')
         s3 = self.addSwitch('s3')
         s4 = self.addSwitch('s4')
+
+
+        # links
+        self.addLink(h1, s1)
+        self.addLink(s2, s1)
+        self.addLink(h2, s2)
+        self.addLink(s2, s3)
+        self.addLink(s1, s3)
+        self.addLink(s2, s4)
+        self.addLink(h3, s3)
+        self.addLink(h4, s3)
+        self.addLink(s3, s4)
+        self.addLink(h5, s4)
+        self.addLink(h6, s4)
+        self.addLink(h7, s4)
+
+
+topos = {'CN_final': (lambda : CN_final())}
+
+
