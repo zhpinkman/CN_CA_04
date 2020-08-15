@@ -30,7 +30,7 @@ def main():
     net = Mininet(topo=topo, controller=RemoteController, link=TCLink, switch=OVSSwitch)
 
     # controller
-    c0 = net.addController( 'c0', controller=RemoteController, ip='127.0.0.1', port=6633 )
+    c0 = net.addController( 'c0_RYU', controller=RemoteController, ip='127.0.0.1', port=6633)
 
     net.start()
     threading.Thread(target=change_bw_timer_task, args=(net,)).start()
@@ -66,6 +66,6 @@ def change_bw_timer_task(net):  # runs every second
 
 
 if __name__ == '__main__':
-    os.system("sudo mn -c")
+    # os.system("sudo mn -c")
     setLogLevel('info')
     main()
