@@ -130,9 +130,9 @@ def get_path2 (src,dst,first_port,final_port):
 
   global bw_available
 
-  print "Dijkstra's widest path algorithm"
+  print ("Dijkstra's widest path algorithm")
 
-  print "src=",src," dst=",dst, " first_port=", first_port, " final_port=", final_port
+  print ("src=",src," dst=",dst, " first_port=", first_port, " final_port=", final_port)
 
  
 
@@ -156,7 +156,7 @@ def get_path2 (src,dst,first_port,final_port):
 
   Q=set(myswitches)
 
-  print "Q:", Q
+  print ("Q:", Q)
 
  
 
@@ -168,7 +168,7 @@ def get_path2 (src,dst,first_port,final_port):
 
     Q.remove(u)
 
-    print "Q:", Q, "u:", u
+    print ("Q:", Q, "u:", u)
 
  
 
@@ -178,7 +178,7 @@ def get_path2 (src,dst,first_port,final_port):
 
         link_abw = bw_available[str(u)][str(p)]
 
-        print "link_abw:", str(u),"->",str(p),":",link_abw, "kbps"
+        print ("link_abw:", str(u),"->",str(p),":",link_abw, "kbps")
 
         #alt=max(abw[p], min(width[u], abw_between(u,p)))
 
@@ -294,9 +294,9 @@ def get_path (src,dst,first_port,final_port):
 
   global myswitches, adjacency
 
-  print "Dijkstra's shortest path algorithm"
+  print ("Dijkstra's shortest path algorithm")
 
-  print "get_path is called, src=",src," dst=",dst, " first_port=", first_port, " final_port=", final_port
+  print ("get_path is called, src=",src," dst=",dst, " first_port=", first_port, " final_port=", final_port)
 
   distance = {}
 
@@ -444,7 +444,7 @@ class ProjectController(app_manager.RyuApp):
 
     except IOError:
 
-      print "make bw.txt ready"
+      print ("make bw.txt ready")
 
     #print "bw:", bw       
 
@@ -461,7 +461,7 @@ class ProjectController(app_manager.RyuApp):
 
         #self.logger.debug('register datapath: %016x', datapath.id)
 
-        print 'register datapath:', datapath.id
+        print ('register datapath:', datapath.id)
 
         self.datapaths[datapath.id] = datapath
 
@@ -471,7 +471,7 @@ class ProjectController(app_manager.RyuApp):
 
         #self.logger.debug('unregister datapath: %016x', datapath.id)
 
-        print 'unregister datapath:', datapath.id
+        print ('unregister datapath:', datapath.id)
 
         del self.datapaths[datapath.id]
 
@@ -578,7 +578,7 @@ class ProjectController(app_manager.RyuApp):
 
             bw_available[str(dpid)][str(p)]=int(bw[str(dpid)][str(p)]) * 1024.0 - bw_used[dpid][p]
 
-            print str(dpid),"->",str(p),":",bw_available[str(dpid)][str(p)]," kbps"
+            print (str(dpid),"->",str(p),":",bw_available[str(dpid)][str(p)]," kbps")
 
             #print str(dpid),"->",str(p),":", bw[str(dpid)][str(p)]," kbps"
 
@@ -586,7 +586,7 @@ class ProjectController(app_manager.RyuApp):
 
           clock[dpid][p]=time.time()
 
-    print "-------------------------------------------------------------------" 
+    print ("-------------------------------------------------------------------" )
 
 
 
@@ -643,7 +643,7 @@ class ProjectController(app_manager.RyuApp):
 
   def install_path(self, p, ev, src_mac, dst_mac):
 
-    print "install_path is called"
+    print ("install_path is called")
 
     #print "p=", p, " src_mac=", src_mac, " dst_mac=", dst_mac
 
@@ -659,7 +659,7 @@ class ProjectController(app_manager.RyuApp):
 
     for sw, in_port, out_port in p:
 
-      print src_mac,"->", dst_mac, "via ", sw, " in_port=", in_port, " out_port=", out_port
+      print (src_mac,"->", dst_mac, "via ", sw, " in_port=", in_port, " out_port=", out_port)
 
       match=parser.OFPMatch(in_port=in_port, eth_src=src_mac, eth_dst=dst_mac)
 
@@ -678,7 +678,7 @@ class ProjectController(app_manager.RyuApp):
   @set_ev_cls(ofp_event.EventOFPSwitchFeatures , CONFIG_DISPATCHER)
   def switch_features_handler(self , ev):
 
-      print "switch_features_handler is called"
+      print ("switch_features_handler is called")
 
       datapath = ev.msg.datapath
 
@@ -761,7 +761,7 @@ class ProjectController(app_manager.RyuApp):
 
         p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
 
-      print "Path=", p
+      print ("Path=", p)
 
       self.install_path(p, ev, src, dst)
 
@@ -831,7 +831,7 @@ class ProjectController(app_manager.RyuApp):
   @set_ev_cls(events)
   def get_topology_data(self, ev):
 
-    print "get_topology_data() is called"
+    print ("get_topology_data() is called")
 
     global myswitches, adjacency, datapath_list
 
@@ -844,7 +844,7 @@ class ProjectController(app_manager.RyuApp):
 
     #print "datapath_list=", datapath_list
 
-    print "myswitches=", myswitches
+    print ("myswitches=", myswitches)
 
     links_list = get_link(self.topology_api_app, None)
 
@@ -860,4 +860,4 @@ class ProjectController(app_manager.RyuApp):
 
       adjacency[s2][s1]=port2
 
-      print s1,":", port1, "<--->",s2,":",port2
+      print (s1,":", port1, "<--->",s2,":",port2)
