@@ -1,4 +1,15 @@
 from mininet.topo import Topo
+import random
+import threading
+from mininet.link import TCLink, Intf
+from mininet.net import Mininet
+from mininet.node import Controller, RemoteController, OVSController
+from mininet.node import CPULimitedHost, Host, Node
+from mininet.node import OVSKernelSwitch, UserSwitch
+from mininet.node import IVSSwitch
+from mininet.cli import CLI
+from mininet.log import setLogLevel, info
+from subprocess import call
 
 
 class CN_final(Topo):
@@ -23,19 +34,29 @@ class CN_final(Topo):
 
 
         # links
-        self.addLink(h1, s1)
-        self.addLink(s2, s1)
-        self.addLink(h2, s2)
+        self.addLink(h1, s1, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(s2, s1, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(h2, s2, cls=TCLink, bw=random.randint(0, 10))
         # self.addLink(s2, s3)
-        self.addLink(s1, s3)
+        self.addLink(s1, s3, cls=TCLink, bw=random.randint(0, 10))
         # self.addLink(s2, s4)
-        self.addLink(h3, s3)
-        self.addLink(h4, s3)
-        self.addLink(s3, s4)
-        self.addLink(h5, s4)
-        self.addLink(h6, s4)
-        self.addLink(h7, s4)
+        self.addLink(h3, s3, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(h4, s3, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(s3, s4, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(h5, s4, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(h6, s4, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(h7, s4, cls=TCLink, bw=random.randint(0, 10))
 
+
+# def printit():
+#   threading.Timer(5.0, printit).start()
+#   print "Hello, World!"
+
+# printit()
+
+#  intf = h2.intf()
+#     info( "Setting BW Limit for Interface " + str(intf) + " to " + str(target_bw) + "\n" )
+#     intf.config(bw = target_bw, smooth_change = smooth_change)
 
 topos = {'CN_final': (lambda : CN_final())}
 
