@@ -34,7 +34,7 @@ def main():
 
     net.start()
     threading.Thread(target=change_bw_timer_task, args=(net,)).start()
-    # threading.Thread(target=send_data_timer_task, args=(net,)).start()
+    threading.Thread(target=send_data_timer_task, args=(net,)).start()
 
     print ("*** Running CLI")
     CLI(net)  # Bring up the mininet CLI
@@ -48,10 +48,21 @@ def main():
 def send_data_timer_task(net):  # runs every second
     global running
     while running:
-        # for host in net.hosts:
-            #target_host = random
+        save = None
+        print("--sending TCP messages")
+        for host_index in range(1, 8):
+            h = net.get('h'+str(host_index))
+
+            target_host_index = random.randint(1, 7)
+            while target_host_index == host_index:
+                target_host_index = random.randint(1, 7)
+
+            target_h = net.get("h"+str(target_host_index))
+            save = target_h.IP()
+            r = h.cmd('iperf -c %s -n 100000' % target_h.IP())
+            print(r)
             # net.iperf( self, hosts=[host, ], l4Type='TCP', udpBw='100K', fmt=None,seconds=5, port=5001)
-        print("sent TCP messages: ")
+        print("--sent TCP messages: ", save)
         time.sleep(SEND_TCP_INTERVAL)
 
 
