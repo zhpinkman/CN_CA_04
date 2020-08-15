@@ -4,7 +4,7 @@ import threading
 import time
 import os
 from mininet.net import Mininet
-from mininet.node import Controller, RemoteController, OVSController
+from mininet.node import Controller
 from mininet.node import CPULimitedHost, Host, Node
 from mininet.node import OVSKernelSwitch, UserSwitch, OVSSwitch
 from mininet.node import IVSSwitch
@@ -12,6 +12,7 @@ from mininet.link import TCLink, Intf
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 from subprocess import call
+from pox import POX
 
 from mininet_script import Topology
 
@@ -27,14 +28,12 @@ def main():
     global running
     print("-------------------------HELLO-----------------------")
     topo = Topology()
-    net = Mininet(topo=topo, controller=RemoteController, link=TCLink, switch=OVSSwitch, ipBase='10.0.0.0/8')
+    net = Mininet(topo=topo,controller=POX, link=TCLink, switch=OVSSwitch, ipBase='10.0.0.0/8')
 
-    # controller
-    c0 = net.addController( 'c0_RYU', controller=RemoteController, ip='127.0.0.1', port=6633)
 
     net.start()
-    threading.Thread(target=change_bw_timer_task, args=(net,)).start()
-    threading.Thread(target=send_data_timer_task, args=(net,)).start()
+    # threading.Thread(target=change_bw_timer_task, args=(net,)).start()
+    # threading.Thread(target=send_data_timer_task, args=(net,)).start()
 
     print ("*** Running CLI")
     CLI(net)  # Bring up the mininet CLI
@@ -42,6 +41,7 @@ def main():
 
     print("*** Stopping network")
     running = False
+    # c0.stop()
     net.stop()
 
 

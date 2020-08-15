@@ -2,6 +2,7 @@ from mininet.topo import Topo
 import random
 import threading
 import time
+import os
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController, OVSController
 from mininet.node import CPULimitedHost, Host, Node
@@ -36,9 +37,9 @@ class Topology(Topo):
         self.addLink(h1, s1, cls=TCLink, bw=1, delay='1ms', loss=0)
         self.addLink(s2, s1, cls=TCLink, bw=1, delay='1ms', loss=0)
         self.addLink(h2, s2, cls=TCLink, bw=1, delay='1ms', loss=0)
-        self.addLink(s2, s3, cls=TCLink, bw=1, delay='1ms', loss=0)
+        # self.addLink(s2, s3, cls=TCLink, bw=1, delay='1ms', loss=0)
         self.addLink(s1, s3, cls=TCLink, bw=1, delay='1ms', loss=0)
-        self.addLink(s2, s4, cls=TCLink, bw=1, delay='1ms', loss=0)
+        # self.addLink(s2, s4, cls=TCLink, bw=1, delay='1ms', loss=0)
         self.addLink(h3, s3, cls=TCLink, bw=1, delay='1ms', loss=0)
         self.addLink(h4, s3, cls=TCLink, bw=1, delay='1ms', loss=0)
         self.addLink(s3, s4, cls=TCLink, bw=1, delay='1ms', loss=0)
