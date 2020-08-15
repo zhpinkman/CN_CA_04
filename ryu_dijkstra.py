@@ -288,9 +288,7 @@ class ProjectController(app_manager.RyuApp):
         a=line.split()
 
         if a:
-
           bw[str(a[0])][str(a[1])]=int(a[2])
-
           bw[str(a[1])][str(a[0])]=int(a[2])
 
       fin.close()
@@ -579,7 +577,7 @@ class ProjectController(app_manager.RyuApp):
         #print "mymac=", mymac
 
     if dst in mymac.keys():
-        p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
+      p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
 
       print ("Path=", p)
       self.install_path(p, ev, src, dst)

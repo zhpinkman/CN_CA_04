@@ -27,7 +27,7 @@ def main():
     global running
     print("-------------------------HELLO-----------------------")
     topo = Topology()
-    net = Mininet(topo=topo, controller=RemoteController, link=TCLink, switch=OVSSwitch)
+    net = Mininet(topo=topo, controller=RemoteController, link=TCLink, switch=OVSSwitch, ipBase='10.0.0.0/8')
 
     # controller
     c0 = net.addController( 'c0_RYU', controller=RemoteController, ip='127.0.0.1', port=6633)
