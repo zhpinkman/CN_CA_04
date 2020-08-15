@@ -34,7 +34,7 @@ from ryu.controller import mac_to_port
 
 from ryu.controller import ofp_event
 
-from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
+from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER, DEAD_DISPATCHER
 
 from ryu.controller.handler import set_ev_cls
 
@@ -50,21 +50,27 @@ from ryu.lib.packet import ether_types
 
 from ryu.lib import mac
 
- 
+from ryu.topology import event, switches
 
 from ryu.topology.api import get_switch, get_link
 
 from ryu.app.wsgi import ControllerBase
 
-from ryu.topology import event, switches
-
 from collections import defaultdict
+
+from ryu.lib import hub
+
+from operator import attrgetter
+
+from datetime import datetime
+
+import time
 
  
 
 #switches
 
-switches = []
+myswitches = []
 
  
 
@@ -80,7 +86,191 @@ adjacency=defaultdict(lambda:defaultdict(lambda:None))
 
  
 
+datapath_list={}
+
+ 
+
+byte=defaultdict(lambda:defaultdict(lambda:None))
+
+clock=defaultdict(lambda:defaultdict(lambda:None))
+
+bw_used=defaultdict(lambda:defaultdict(lambda:None))
+
+bw_available=defaultdict(lambda:defaultdict(lambda:None))
+
+bw=defaultdict(lambda:defaultdict(lambda:None))
+
+ 
+
+target_srcmac="00:00:00:00:00:01"
+
+target_dstmac="00:00:00:00:00:03"
+
+ 
+
+def max_abw(abw, Q):
+
+  max = float('-Inf')
+
+  node = 0
+
+  for v in Q:
+
+    if abw[v] > max:
+
+      max = abw[v]
+
+      node = v
+
+  return node
+
+ 
+
+def get_path2 (src,dst,first_port,final_port):
+
+  global bw_available
+
+  print "Dijkstra's widest path algorithm"
+
+  print "src=",src," dst=",dst, " first_port=", first_port, " final_port=", final_port
+
+ 
+
+  #available bandwidth
+
+  abw = {}
+
+  previous = {}
+
+ 
+
+  for dpid in myswitches:
+
+    abw[dpid] = float('-Inf')
+
+    previous[dpid] = None
+
+ 
+
+  abw[src]=float('Inf')
+
+  Q=set(myswitches)
+
+  print "Q:", Q
+
+ 
+
+  #print time.time()
+
+  while len(Q)>0:
+
+    u = max_abw(abw, Q)
+
+    Q.remove(u)
+
+    print "Q:", Q, "u:", u
+
+ 
+
+    for p in myswitches:
+
+      if adjacency[u][p]!=None:
+
+        link_abw = bw_available[str(u)][str(p)]
+
+        print "link_abw:", str(u),"->",str(p),":",link_abw, "kbps"
+
+        #alt=max(abw[p], min(width[u], abw_between(u,p)))
+
+        if abw[u] < link_abw:
+
+          tmp = abw[u]
+
+        else:
+
+          tmp = link_abw
+
+        if abw[p] > tmp:
+
+          alt = abw[p]
+
+        else:
+
+          alt = tmp
+
+ 
+
+        if alt > abw[p]:
+
+          abw[p] = alt
+
+          previous[p] = u
+
+ 
+
+  #print "distance=", distance, " previous=", previous
+
+  r=[]
+
+  p=dst
+
+  r.append(p)
+
+  q=previous[p]
+
+ 
+
+  while q is not None:
+
+    if q == src:
+
+      r.append(q)
+
+      break
+
+    p=q
+
+    r.append(p)
+
+    q=previous[p]
+
+ 
+
+  r.reverse()
+
+  if src==dst:
+
+    path=[src]
+
+  else:
+
+    path=r
+
+ 
+
+  # Now add the ports
+
+  r = []
+
+  in_port = first_port
+
+  for s1,s2 in zip(path[:-1],path[1:]):
+
+    out_port = adjacency[s1][s2]
+
+    r.append((s1,in_port,out_port))
+
+    in_port = adjacency[s2][s1]
+
+  r.append((dst,in_port,final_port))
+
+  return r
+
+ 
+
 def minimum_distance(distance, Q):
+
+  #print "minimum_distance() is called", " distance=", distance, " Q=", Q
 
   min = float('Inf')
 
@@ -102,6 +292,10 @@ def get_path (src,dst,first_port,final_port):
 
   #Dijkstra's algorithm
 
+  global myswitches, adjacency
+
+  print "Dijkstra's shortest path algorithm"
+
   print "get_path is called, src=",src," dst=",dst, " first_port=", first_port, " final_port=", final_port
 
   distance = {}
@@ -110,7 +304,7 @@ def get_path (src,dst,first_port,final_port):
 
  
 
-  for dpid in switches:
+  for dpid in myswitches:
 
     distance[dpid] = float('Inf')
 
@@ -120,23 +314,27 @@ def get_path (src,dst,first_port,final_port):
 
   distance[src]=0
 
-  Q=set(switches)
+  Q=set(myswitches)
 
-  print "Q=", Q
+  #print "Q=", Q
 
-   
+ 
 
   while len(Q)>0:
 
     u = minimum_distance(distance, Q)
 
+    #print "u=", u
+
     Q.remove(u)
 
-   
+    #print "After removing ", u, " Q=", Q
 
-    for p in switches:
+    for p in myswitches:
 
-      if adjacency[u][p]!=None:
+     if adjacency[u][p]!=None:
+
+        #print u, "--------",  p
 
         w = 1
 
@@ -148,6 +346,8 @@ def get_path (src,dst,first_port,final_port):
 
  
 
+  #print "distance=", distance, " previous=", previous
+
   r=[]
 
   p=dst
@@ -155,6 +355,8 @@ def get_path (src,dst,first_port,final_port):
   r.append(p)
 
   q=previous[p]
+
+ 
 
   while q is not None:
 
@@ -206,250 +408,456 @@ def get_path (src,dst,first_port,final_port):
 
 class ProjectController(app_manager.RyuApp):
 
-    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
+  OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
- 
 
-    def __init__(self, *args, **kwargs):
 
-        super(ProjectController, self).__init__(*args, **kwargs)
+  def __init__(self, *args, **kwargs):
 
-        self.mac_to_port = {}
+    super(ProjectController, self).__init__(*args, **kwargs)
 
-        self.topology_api_app = self
+    self.mac_to_port = {}
 
-        self.datapath_list=[]
+    self.topology_api_app = self
 
-  
+    self.datapaths = {}
 
-    # Handy function that lists all attributes in the given object
+    self.monitor_thread = hub.spawn(self._monitor)
 
-    def ls(self,obj):
+    global bw
 
-        print("\n".join([x for x in dir(obj) if x[0] != "_"]))
+    try:
 
- 
+      fin = open("bw.txt", "r")
 
-    def add_flow(self, datapath, in_port, dst, actions):
+      for line in fin:
 
-        ofproto = datapath.ofproto
+        a=line.split()
 
-        parser = datapath.ofproto_parser      
+        if a:
 
-        match = datapath.ofproto_parser.OFPMatch(
+          bw[str(a[0])][str(a[1])]=int(a[2])
 
-            in_port=in_port, eth_dst=dst)
+          bw[str(a[1])][str(a[0])]=int(a[2])
 
-        
+      fin.close()
 
-        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
+    except IOError:
 
-                                             actions)] 
+      print "make bw.txt ready"
 
- 
+    #print "bw:", bw       
 
-        mod = datapath.ofproto_parser.OFPFlowMod(
 
-            datapath=datapath, match=match, cookie=0,
 
-            command=ofproto.OFPFC_ADD, idle_timeout=0, hard_timeout=0,
+  @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])
+  def _state_change_handler(self, ev):
 
-            priority=ofproto.OFP_DEFAULT_PRIORITY, instructions=inst)
+    datapath = ev.datapath
 
-        datapath.send_msg(mod)
+    if ev.state == MAIN_DISPATCHER:
 
- 
+      if not datapath.id in self.datapaths:
 
-    def install_path(self, p, ev, src_mac, dst_mac):
+        #self.logger.debug('register datapath: %016x', datapath.id)
 
-       print "install_path is called"
+        print 'register datapath:', datapath.id
 
-       #print "p=", p, " src_mac=", src_mac, " dst_mac=", dst_mac
+        self.datapaths[datapath.id] = datapath
 
-       msg = ev.msg
+    elif ev.state == DEAD_DISPATCHER:
 
-       datapath = msg.datapath
+      if datapath.id in self.datapaths:
 
-       ofproto = datapath.ofproto
+        #self.logger.debug('unregister datapath: %016x', datapath.id)
 
-       parser = datapath.ofproto_parser
+        print 'unregister datapath:', datapath.id
 
-       for sw, in_port, out_port in p:
+        del self.datapaths[datapath.id]
 
-         #print src_mac,"->", dst_mac, "via ", sw, " in_port=", in_port, " out_port=", out_port
 
-         match=parser.OFPMatch(in_port=in_port, eth_src=src_mac, eth_dst=dst_mac)
 
-         actions=[parser.OFPActionOutput(out_port)]
+  def _monitor(self):
 
-         datapath=self.datapath_list[int(sw)-1]
+    while True:
 
-         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS , actions)]
+      for dp in self.datapaths.values():
 
-             mod = datapath.ofproto_parser.OFPFlowMod(
+        self._request_stats(dp)
 
-            datapath=datapath, match=match, idle_timeout=0, hard_timeout=0,
+      hub.sleep(3)
 
-            priority=1, instructions=inst)
 
-         datapath.send_msg(mod)
 
- 
+  def _request_stats(self, datapath):
 
-    @set_ev_cls(ofp_event.EventOFPSwitchFeatures , CONFIG_DISPATCHER)
+      #self.logger.debug('send stats request: %016x', datapath.id)
 
-    def switch_features_handler(self , ev):
+      #print 'send stats request:', datapath.id
 
-         print "switch_features_handler is called"
+    ofproto = datapath.ofproto
 
-         datapath = ev.msg.datapath
+    parser = datapath.ofproto_parser
 
-         ofproto = datapath.ofproto
 
-            parser = datapath.ofproto_parser
 
-        match = parser.OFPMatch()
+    req = parser.OFPFlowStatsRequest(datapath)
 
-            actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, ofproto.OFPCML_NO_BUFFER)]
+    datapath.send_msg(req)
 
-        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS ,
 
-actions)]
 
-            mod = datapath.ofproto_parser.OFPFlowMod(
+    req = parser.OFPPortStatsRequest(datapath, 0, ofproto.OFPP_ANY)
 
-            datapath=datapath, match=match, cookie=0,
+    datapath.send_msg(req)
 
-            command=ofproto.OFPFC_ADD, idle_timeout=0, hard_timeout=0,
 
-            priority=0, instructions=inst)
 
-        datapath.send_msg(mod)
+  @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
+  def _flow_stats_reply_handler(self, ev):
+    body = ev.msg.body
 
- 
 
-    @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
 
-    def _packet_in_handler(self, ev):
+    #self.logger.info('datapath         '
 
-        msg = ev.msg
+    #                 'in-port  eth-dst           '
 
-        datapath = msg.datapath
+    #                 'out-port packets  bytes')
 
-        ofproto = datapath.ofproto
+    #self.logger.info('---------------- '
 
-        parser = datapath.ofproto_parser
+    #                 '-------- ----------------- '
 
-        in_port = msg.match['in_port']
+    #                 '-------- -------- --------')
 
- 
+    #for stat in sorted([flow for flow in body if flow.priority == 1],
 
-        pkt = packet.Packet(msg.data)
+    #                   key=lambda flow: (flow.match['in_port'],
 
-        eth = pkt.get_protocol(ethernet.ethernet)
+    #                                     flow.match['eth_dst'])):
 
-        #print "eth.ethertype=", eth.ethertype
+    #    self.logger.info('%016x %8x %17s %8x %8d %8d',
 
- 
+    #                     ev.msg.datapath.id,
 
-        #avodi broadcast from LLDP
+    #                     stat.match['in_port'], stat.match['eth_dst'],
 
-        if eth.ethertype==35020:
+    #                     stat.instructions[0].actions[0].port,
 
-          return
+    #                     stat.packet_count, stat.byte_count)
 
- 
 
-        dst = eth.dst
 
-        src = eth.src
 
-        dpid = datapath.id
 
-        self.mac_to_port.setdefault(dpid, {})
+  @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
+  def _port_stats_reply_handler(self, ev):
 
- 
+    global byte, clock, bw_used, bw_available
 
-        if src not in mymac.keys():
+    #print time.time()," _port_stats_reply_handler"
 
-            mymac[src]=( dpid,  in_port)
+    body = ev.msg.body
 
-            #print "mymac=", mymac
+    dpid = ev.msg.datapath.id
 
- 
+    for stat in sorted(body, key=attrgetter('port_no')):
 
-        if dst in mymac.keys():
+      #print dpid, stat.port_no, stat.tx_packets
 
-            p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
+      for p in myswitches:
 
-            print p
+        if adjacency[dpid][p]==stat.port_no:
 
-            self.install_path(p, ev, src, dst)
+          #print dpid, p, stat.port_no
 
-            out_port = p[0][2]
+          if byte[dpid][p]>0:
 
-        else:
+            bw_used[dpid][p] = (stat.tx_bytes - byte[dpid][p]) * 8.0 / (time.time()-clock[dpid][p]) / 1000
 
-            out_port = ofproto.OFPP_FLOOD
+            bw_available[str(dpid)][str(p)]=int(bw[str(dpid)][str(p)]) * 1024.0 - bw_used[dpid][p]
 
-       
+            print str(dpid),"->",str(p),":",bw_available[str(dpid)][str(p)]," kbps"
 
-        actions = [parser.OFPActionOutput(out_port)]
+            #print str(dpid),"->",str(p),":", bw[str(dpid)][str(p)]," kbps"
 
- 
+          byte[dpid][p]=stat.tx_bytes
 
-        # install a flow to avoid packet_in next time
+          clock[dpid][p]=time.time()
 
-        if out_port != ofproto.OFPP_FLOOD:
+    print "-------------------------------------------------------------------" 
 
-            match = parser.OFPMatch(in_port=in_port, eth_src=src, eth_dst=dst)
 
-       
 
-        data=None
+    #self.logger.info('datapath         port     '
 
-        if msg.buffer_id==ofproto.OFP_NO_BUFFER:
+    #                 'rx-pkts  rx-bytes rx-error '
 
-           data=msg.data
+    #                 'tx-pkts  tx-bytes tx-error')
 
- 
+    #self.logger.info('---------------- -------- '
 
-        out = parser.OFPPacketOut(
+    #                 '-------- -------- -------- '
 
-            datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port,
+    #                 '-------- -------- --------')
 
-            actions=actions, data=data)
+    #for stat in sorted(body, key=attrgetter('port_no')):
 
-        datapath.send_msg(out)
+    #    self.logger.info('%016x %8x %8d %8d %8d %8d %8d %8d',
 
-    
+    #                     ev.msg.datapath.id, stat.port_no,
 
-    @set_ev_cls(event.EventSwitchEnter)
+    #                     stat.rx_packets, stat.rx_bytes, stat.rx_errors,
 
-    def get_topology_data(self, ev):
+    #                     stat.tx_packets, stat.tx_bytes, stat.tx_errors)
 
-        global switches
 
-        switch_list = get_switch(self.topology_api_app, None)  
 
-        switches=[switch.dp.id for switch in switch_list]
 
-        self.datapath_list=[switch.dp for switch in switch_list]
 
-        #print "self.datapath_list=", self.datapath_list
+  # Handy function that lists all attributes in the given object
 
-        print "switches=", switches
+  def ls(self,obj):
 
- 
+    print("\n".join([x for x in dir(obj) if x[0] != "_"]))
 
-        links_list = get_link(self.topology_api_app, None)
 
-        mylinks=[(link.src.dpid,link.dst.dpid,link.src.port_no,link.dst.port_no) for link in links_list]
 
-        for s1,s2,port1,port2 in mylinks:
+  def add_flow(self, datapath, in_port, dst, actions):
 
-          adjacency[s1][s2]=port1
+    ofproto = datapath.ofproto
 
-          adjacency[s2][s1]=port2
+    parser = datapath.ofproto_parser    
 
-          print s1,s2,port1,port2
+    match = datapath.ofproto_parser.OFPMatch(in_port=in_port, eth_dst=dst)
+
+    inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+
+    mod = datapath.ofproto_parser.OFPFlowMod(datapath=datapath, match=match, cookie=0, command=ofproto.OFPFC_ADD, 
+      idle_timeout=0, hard_timeout=0, priority=ofproto.OFP_DEFAULT_PRIORITY, instructions=inst)
+
+    datapath.send_msg(mod)
+
+
+
+  def install_path(self, p, ev, src_mac, dst_mac):
+
+    print "install_path is called"
+
+    #print "p=", p, " src_mac=", src_mac, " dst_mac=", dst_mac
+
+    msg = ev.msg
+
+    datapath = msg.datapath
+
+    ofproto = datapath.ofproto
+
+    parser = datapath.ofproto_parser
+
+
+
+    for sw, in_port, out_port in p:
+
+      print src_mac,"->", dst_mac, "via ", sw, " in_port=", in_port, " out_port=", out_port
+
+      match=parser.OFPMatch(in_port=in_port, eth_src=src_mac, eth_dst=dst_mac)
+
+      actions=[parser.OFPActionOutput(out_port)]
+
+      datapath=datapath_list[sw]
+
+      inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS , actions)]
+
+      mod = datapath.ofproto_parser.OFPFlowMod(datapath=datapath, match=match, idle_timeout=0, hard_timeout=0, priority=1, instructions=inst)
+
+      datapath.send_msg(mod)
+
+
+
+  @set_ev_cls(ofp_event.EventOFPSwitchFeatures , CONFIG_DISPATCHER)
+  def switch_features_handler(self , ev):
+
+      print "switch_features_handler is called"
+
+      datapath = ev.msg.datapath
+
+      ofproto = datapath.ofproto
+
+      parser = datapath.ofproto_parser
+
+      match = parser.OFPMatch()
+
+      actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, ofproto.OFPCML_NO_BUFFER)]
+
+      inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS , actions)]
+
+      mod = datapath.ofproto_parser.OFPFlowMod(datapath=datapath, match=match, cookie=0, command=ofproto.OFPFC_ADD, 
+        idle_timeout=0, hard_timeout=0,priority=0, instructions=inst)
+
+      datapath.send_msg(mod)
+
+
+
+  @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
+  def _packet_in_handler(self, ev):
+
+    global target_srcmac, target_dstmac
+
+    #print "packet_in event:", ev.msg.datapath.id, " in_port:", ev.msg.match['in_port']
+
+    msg = ev.msg
+
+    datapath = msg.datapath
+
+    ofproto = datapath.ofproto
+
+    parser = datapath.ofproto_parser
+
+    in_port = msg.match['in_port']
+
+    pkt = packet.Packet(msg.data)
+
+    eth = pkt.get_protocol(ethernet.ethernet)
+
+    #print "eth.ethertype=", eth.ethertype
+
+
+
+    #avodi broadcast from LLDP
+
+    if eth.ethertype==35020:
+      return
+
+    dst = eth.dst
+
+    src = eth.src
+
+    dpid = datapath.id
+
+    #print "src=", src, " dst=", dst, " type=", hex(eth.ethertype)
+
+    #print "adjacency=", adjacency
+
+    self.mac_to_port.setdefault(dpid, {})
+
+
+
+    if src not in mymac.keys():
+
+      mymac[src]=( dpid,  in_port)
+
+        #print "mymac=", mymac
+
+
+
+    if dst in mymac.keys():
+
+      if (src==target_srcmac and dst==target_dstmac) or (dst==target_srcmac and src==target_dstmac):
+
+        p = get_path2(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
+
+      else:
+
+        p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
+
+      print "Path=", p
+
+      self.install_path(p, ev, src, dst)
+
+      out_port = p[0][2]
+
+    else:
+      out_port = ofproto.OFPP_FLOOD
+
+
+
+    actions = [parser.OFPActionOutput(out_port)]
+
+    # install a flow to avoid packet_in next time
+
+    if out_port != ofproto.OFPP_FLOOD:
+      match = parser.OFPMatch(in_port=in_port, eth_src=src, eth_dst=dst)
+
+
+
+    data=None
+
+    if msg.buffer_id==ofproto.OFP_NO_BUFFER:
+      data=msg.data
+
+
+
+    if out_port == ofproto.OFPP_FLOOD:
+
+      #print "FLOOD"
+
+      while len(actions) > 0 : actions.pop()
+
+      for i in range(1,23):
+
+        actions.append(parser.OFPActionOutput(i))
+
+      #print "actions=", actions
+
+      out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
+
+                            in_port=in_port, actions=actions, data=data)
+
+      datapath.send_msg(out) 
+
+    else:    
+
+      #print "unicast"
+
+      out = parser.OFPPacketOut(
+
+          datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port,
+
+          actions=actions, data=data)
+
+      datapath.send_msg(out)
+
+
+
+  events = [event.EventSwitchEnter,
+
+            event.EventSwitchLeave, event.EventPortAdd,
+
+            event.EventPortDelete, event.EventPortModify,
+
+            event.EventLinkAdd, event.EventLinkDelete]
+
+  @set_ev_cls(events)
+  def get_topology_data(self, ev):
+
+    print "get_topology_data() is called"
+
+    global myswitches, adjacency, datapath_list
+
+    switch_list = get_switch(self.topology_api_app, None)
+
+    myswitches=[switch.dp.id for switch in switch_list]
+
+    for switch in switch_list:
+      datapath_list[switch.dp.id]=switch.dp
+
+    #print "datapath_list=", datapath_list
+
+    print "myswitches=", myswitches
+
+    links_list = get_link(self.topology_api_app, None)
+
+    #print "links_list=", links_list
+
+    mylinks=[(link.src.dpid,link.dst.dpid,link.src.port_no,link.dst.port_no) for link in links_list]
+
+    for s1,s2,port1,port2 in mylinks:
+
+      #print "type(s1)=", type(s1), " type(port1)=", type(port1)
+
+      adjacency[s1][s2]=port1
+
+      adjacency[s2][s1]=port2
+
+      print s1,":", port1, "<--->",s2,":",port2
