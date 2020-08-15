@@ -15,19 +15,39 @@ from subprocess import call
 
 from mininet_script import Topology
 
+MIN_BW = 1
+MAX_BW = 5
+
+running = True
+
+
 def main():
+    global running
     print("-------------------------HELLO-----------------------")
     topo = Topology()
     net = Mininet(topo=topo, link=TCLink)
+
     net.start()
-    print ("*** Running CLI")
+    threading.Thread(target=change_bw_timer_task,
+                     name='TIMER_TASK1', args=(net,)).start()
+    # print ("*** Running CLI")
     # CLI(net)  # Bring up the mininet CLI
     for i in range(20):
         time.sleep(1)
         print(net.links[0].intf1.params["bw"])
-    print ("*** Stopping network")
+
+    print("*** Stopping network")
+    running = False
     net.stop()
 
+
+def change_bw_timer_task(net):  # runs every second
+    global running
+    while running:
+        for link in net.links:
+            bw = random.randint(MIN_BW, MAX_BW)
+            link.intf1.params["bw"] = bw
+        time.sleep(1)
 
 
 if __name__ == '__main__':

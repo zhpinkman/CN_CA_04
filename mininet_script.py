@@ -12,13 +12,11 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 from subprocess import call
 
-MIN_BW = 1
-MAX_BW = 5
 
 class Topology(Topo):
     def __init__(self):
         Topo.__init__(self)
-        
+
         # hosts
         h1 = self.addHost('h1', cls=Host, ip='10.0.0.1', defaultRoute=None)
         h2 = self.addHost('h2', cls=Host, ip='10.0.0.2', defaultRoute=None)
@@ -28,48 +26,32 @@ class Topology(Topo):
         h6 = self.addHost('h6', cls=Host, ip='10.0.0.6', defaultRoute=None)
         h7 = self.addHost('h7', cls=Host, ip='10.0.0.7', defaultRoute=None)
 
-        
-
         # switches
         s1 = self.addSwitch('s1')
         s2 = self.addSwitch('s2')
         s3 = self.addSwitch('s3')
         s4 = self.addSwitch('s4')
 
-
         # links
-        self.addLink(h1, s1, cls=TCLink, bw=1, delay='1ms',loss=0)
-        self.addLink(s2, s1, cls=TCLink, bw=1, delay='1ms',loss=0)
-        self.addLink(h2, s2, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(h1, s1, cls=TCLink, bw=1, delay='1ms', loss=0)
+        self.addLink(s2, s1, cls=TCLink, bw=1, delay='1ms', loss=0)
+        self.addLink(h2, s2, cls=TCLink, bw=1, delay='1ms', loss=0)
         # self.addLink(s2, s3)
-        self.addLink(s1, s3, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(s1, s3, cls=TCLink, bw=1, delay='1ms', loss=0)
         # self.addLink(s2, s4)
-        self.addLink(h3, s3, cls=TCLink, bw=1, delay='1ms',loss=0)
-        self.addLink(h4, s3, cls=TCLink, bw=1, delay='1ms',loss=0)
-        self.addLink(s3, s4, cls=TCLink, bw=1, delay='1ms',loss=0)
-        self.addLink(h5, s4, cls=TCLink, bw=1, delay='1ms',loss=0)
-        self.addLink(h6, s4, cls=TCLink, bw=1, delay='1ms',loss=0)
-        self.addLink(h7, s4, cls=TCLink, bw=1, delay='1ms',loss=0)
+        self.addLink(h3, s3, cls=TCLink, bw=1, delay='1ms', loss=0)
+        self.addLink(h4, s3, cls=TCLink, bw=1, delay='1ms', loss=0)
+        self.addLink(s3, s4, cls=TCLink, bw=1, delay='1ms', loss=0)
+        self.addLink(h5, s4, cls=TCLink, bw=1, delay='1ms', loss=0)
+        self.addLink(h6, s4, cls=TCLink, bw=1, delay='1ms', loss=0)
+        self.addLink(h7, s4, cls=TCLink, bw=1, delay='1ms', loss=0)
 
-        self.running = True
-        # threading.Thread(target=self.change_bw_timer_task, name='TIMER_TASK1').start()
-
-    def change_bw_timer_task(self):  # runs every second
-        while self.running:
-            print(self.links)
-            for link in self.links:
-                bw = random.randint(MIN_BW, MAX_BW)
-                link.intf1.params["bw"] = bw
-            time.sleep(10)
 
 # def printit():
 #   threading.Timer(5.0, printit).start()
 #   print "Hello, World!"
-
 # printit()
-
 #  intf = h2.intf()
 #     info( "Setting BW Limit for Interface " + str(intf) + " to " + str(target_bw) + "\n" )
 #     intf.config(bw = target_bw, smooth_change = smooth_change)
-
-topos = {'CN_final': (lambda : Topology())}
+topos = {'CN_final': (lambda: Topology())}
