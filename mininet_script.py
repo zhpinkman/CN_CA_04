@@ -61,4 +61,16 @@ class CN_final(Topo):
 
 topos = {'CN_final': (lambda : CN_final())}
 
+def main():
+    print("HELLO")
+    topo = CN_final()
+    net = Mininet(topo=topo, link=TCLink)
+    net.start()
+    print ("*** Running CLI")
+    CLI(net)  # Bring up the mininet CLI
+    print ("*** Stopping network")
+    net.stop()
 
+if __name__ == '__main__':
+    setLogLevel('info')
+    main()
