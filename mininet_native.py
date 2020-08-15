@@ -27,18 +27,18 @@ def topology():
     c0 = net.addController( 'c0', controller=RemoteController, ip='127.0.0.1', port=6653 ) # can be 6633
 
     # links
-    net.addLink(h1, s1, cls=TCLink, bw=random.randint(0, 10))
-    net.addLink(s2, s1, cls=TCLink, bw=random.randint(0, 10))
-    net.addLink(h2, s2, cls=TCLink, bw=random.randint(0, 10))
+    net.addLink(h1, s1, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+    net.addLink(s2, s1, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+    net.addLink(h2, s2, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
     # net.addLink(s2, s3)
-    net.addLink(s1, s3, cls=TCLink, bw=random.randint(0, 10))
+    net.addLink(s1, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
     # net.addLink(s2, s4)
-    net.addLink(h3, s3, cls=TCLink, bw=random.randint(0, 10))
-    net.addLink(h4, s3, cls=TCLink, bw=random.randint(0, 10))
-    net.addLink(s3, s4, cls=TCLink, bw=random.randint(0, 10))
-    net.addLink(h5, s4, cls=TCLink, bw=random.randint(0, 10))
-    net.addLink(h6, s4, cls=TCLink, bw=random.randint(0, 10))
-    net.addLink(h7, s4, cls=TCLink, bw=random.randint(0, 10))
+    net.addLink(h3, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+    net.addLink(h4, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+    net.addLink(s3, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+    net.addLink(h5, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+    net.addLink(h6, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+    net.addLink(h7, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
 
     net.build()
 

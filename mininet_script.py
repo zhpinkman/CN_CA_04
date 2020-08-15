@@ -35,18 +35,18 @@ class CN_final(Topo):
 
 
         # links
-        self.addLink(h1, s1, cls=TCLink, bw=random.randint(0, 10))
-        self.addLink(s2, s1, cls=TCLink, bw=random.randint(0, 10))
-        self.addLink(h2, s2, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(h1, s1, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(s2, s1, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(h2, s2, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
         # self.addLink(s2, s3)
-        self.addLink(s1, s3, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(s1, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
         # self.addLink(s2, s4)
-        self.addLink(h3, s3, cls=TCLink, bw=random.randint(0, 10))
-        self.addLink(h4, s3, cls=TCLink, bw=random.randint(0, 10))
-        self.addLink(s3, s4, cls=TCLink, bw=random.randint(0, 10))
-        self.addLink(h5, s4, cls=TCLink, bw=random.randint(0, 10))
-        self.addLink(h6, s4, cls=TCLink, bw=random.randint(0, 10))
-        self.addLink(h7, s4, cls=TCLink, bw=random.randint(0, 10))
+        self.addLink(h3, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(h4, s3, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(s3, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(h5, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(h6, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
+        self.addLink(h7, s4, cls=TCLink, bw=random.randint(0, 10), delay='1ms',loss=0)
 
 
 # def printit():
