@@ -12,7 +12,7 @@ from mininet.log import setLogLevel, info
 from subprocess import call
 
 
-class CN_final(Topo):
+class Topology(Topo):
     def __init__(self):
         Topo.__init__(self)
         
@@ -59,18 +59,4 @@ class CN_final(Topo):
 #     info( "Setting BW Limit for Interface " + str(intf) + " to " + str(target_bw) + "\n" )
 #     intf.config(bw = target_bw, smooth_change = smooth_change)
 
-topos = {'CN_final': (lambda : CN_final())}
-
-def main():
-    print("HELLO")
-    topo = CN_final()
-    net = Mininet(topo=topo, link=TCLink)
-    net.start()
-    print ("*** Running CLI")
-    CLI(net)  # Bring up the mininet CLI
-    print ("*** Stopping network")
-    net.stop()
-
-if __name__ == '__main__':
-    setLogLevel('info')
-    main()
+topos = {'CN_final': (lambda : Topology())}
