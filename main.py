@@ -30,11 +30,10 @@ def main():
     net.start()
     threading.Thread(target=change_bw_timer_task,
                      name='TIMER_TASK1', args=(net,)).start()
-    # print ("*** Running CLI")
-    # CLI(net)  # Bring up the mininet CLI
-    for i in range(20):
-        time.sleep(1)
-        print(net.links[0].intf1.params["bw"])
+    
+    print ("*** Running CLI")
+    CLI(net)  # Bring up the mininet CLI
+    
 
     print("*** Stopping network")
     running = False
@@ -47,6 +46,7 @@ def change_bw_timer_task(net):  # runs every second
         for link in net.links:
             bw = random.randint(MIN_BW, MAX_BW)
             link.intf1.params["bw"] = bw
+        print("net.links[0].intf1: ", net.links[0].intf1.params["bw"])
         time.sleep(1)
 
 
