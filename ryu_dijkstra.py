@@ -102,10 +102,6 @@ bw=defaultdict(lambda:defaultdict(lambda:None))
 
  
 
-target_srcmac="00:00:00:00:00:99"
-
-target_dstmac="00:00:00:00:00:99"
-
  
 
 def max_abw(abw, Q):
@@ -123,149 +119,6 @@ def max_abw(abw, Q):
       node = v
 
   return node
-
- 
-
-def get_path2 (src,dst,first_port,final_port):
-
-  global bw_available
-
-  print ("Dijkstra's widest path algorithm")
-
-  print ("src=",src," dst=",dst, " first_port=", first_port, " final_port=", final_port)
-
- 
-
-  #available bandwidth
-
-  abw = {}
-
-  previous = {}
-
- 
-
-  for dpid in myswitches:
-
-    abw[dpid] = float('-Inf')
-
-    previous[dpid] = None
-
- 
-
-  abw[src]=float('Inf')
-
-  Q=set(myswitches)
-
-  print ("Q:", Q)
-
- 
-
-  #print time.time()
-
-  while len(Q)>0:
-
-    u = max_abw(abw, Q)
-
-    Q.remove(u)
-
-    print ("Q:", Q, "u:", u)
-
- 
-
-    for p in myswitches:
-
-      if adjacency[u][p]!=None:
-
-        link_abw = bw_available[str(u)][str(p)]
-
-        print ("link_abw:", str(u),"->",str(p),":",link_abw, "kbps")
-
-        #alt=max(abw[p], min(width[u], abw_between(u,p)))
-
-        if abw[u] < link_abw:
-
-          tmp = abw[u]
-
-        else:
-
-          tmp = link_abw
-
-        if abw[p] > tmp:
-
-          alt = abw[p]
-
-        else:
-
-          alt = tmp
-
- 
-
-        if alt > abw[p]:
-
-          abw[p] = alt
-
-          previous[p] = u
-
- 
-
-  #print "distance=", distance, " previous=", previous
-
-  r=[]
-
-  p=dst
-
-  r.append(p)
-
-  q=previous[p]
-
- 
-
-  while q is not None:
-
-    if q == src:
-
-      r.append(q)
-
-      break
-
-    p=q
-
-    r.append(p)
-
-    q=previous[p]
-
- 
-
-  r.reverse()
-
-  if src==dst:
-
-    path=[src]
-
-  else:
-
-    path=r
-
- 
-
-  # Now add the ports
-
-  r = []
-
-  in_port = first_port
-
-  for s1,s2 in zip(path[:-1],path[1:]):
-
-    out_port = adjacency[s1][s2]
-
-    r.append((s1,in_port,out_port))
-
-    in_port = adjacency[s2][s1]
-
-  r.append((dst,in_port,final_port))
-
-  return r
-
  
 
 def minimum_distance(distance, Q):
@@ -701,7 +554,6 @@ class ProjectController(app_manager.RyuApp):
 	#  MOHSEN WAS HERE AND HE THOUGHT THIS IS THE ESSSENTIAL FUNCTION
   @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
   def _packet_in_handler(self, ev):
-    global target_srcmac, target_dstmac
     #print "packet_in event:", ev.msg.datapath.id, " in_port:", ev.msg.match['in_port']
     msg = ev.msg
     datapath = msg.datapath
@@ -727,9 +579,6 @@ class ProjectController(app_manager.RyuApp):
         #print "mymac=", mymac
 
     if dst in mymac.keys():
-      if (src==target_srcmac and dst==target_dstmac) or (dst==target_srcmac and src==target_dstmac):
-        p = get_path2(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
-      else:
         p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
 
       print ("Path=", p)
