@@ -205,7 +205,7 @@ class ProjectController(app_manager.RyuApp):
 		ofproto = datapath.ofproto
 		parser = datapath.ofproto_parser
 		for sw, in_port, out_port in p:
-			# print src_mac,"->", dst_mac, "via ", sw, " in_port=", in_port, " out_port=", out_port
+			print(src_mac,"->", dst_mac, "via ", sw, " in_port=", in_port, " out_port=", out_port)
 			match = parser.OFPMatch(
 				in_port=in_port, eth_src=src_mac, eth_dst=dst_mac)
 			actions = [parser.OFPActionOutput(out_port)]
@@ -261,7 +261,7 @@ class ProjectController(app_manager.RyuApp):
 		self.mac_to_port.setdefault(dpid, {})
 		if src not in mymac.keys():
 			mymac[src] = (dpid, in_port)
-			print("NEW MAC:" , src, mymac[src])
+			print("NEW MAC: (DATAPATH_ID, ONE OF THIS SWITCH PORTS ID) =" , src, mymac[src])
 		# print("\n\nmymac=", mymac)
 		if dst in mymac.keys():
 			# ex. src = 5a:b2:d0:4f:af:45
@@ -291,13 +291,16 @@ class ProjectController(app_manager.RyuApp):
 	@set_ev_cls(events)
 	def get_topology_data(self, ev):
 		global switches
+		# GET SWITCHES IDS FROM TOPOLOGY
 		switch_list = get_switch(self.topology_api_app, None)
 		switches = [switch.dp.id for switch in switch_list]
 		self.datapath_list = [switch.dp for switch in switch_list]
 		# print "self.datapath_list=", self.datapath_list
 		print("switches=", switches)
+		# GET LINKS FROM TOPOLOGY
 		links_list = get_link(self.topology_api_app, None)
 		mylinks = [(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no) for link in links_list]
+		# CREATE adjacency map [sw1][sw2]->port from sw1 to sw2
 		for s1, s2, port1, port2 in mylinks:
 			adjacency[s1][s2] = port1
 			adjacency[s2][s1] = port2
