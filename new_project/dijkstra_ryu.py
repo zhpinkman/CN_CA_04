@@ -39,6 +39,7 @@ adjacency = defaultdict(lambda: defaultdict(lambda: None))
 
 
 def minimum_distance(distance, Q):
+	# FIND THE NODE WITH MIN DIST IN Q
 	min = float('Inf')
 	node = 0
 	for v in Q:
@@ -52,19 +53,24 @@ def get_path(src, dst, first_port, final_port):
 	# Dijkstra's algorithm
 	print("get_path is called, src=", src, " dst=", dst,
 		  " first_port=", first_port, " final_port=", final_port)
+	# INIT DIST AND PREV
 	distance = {}
 	previous = {}
 	for dpid in switches:
 		distance[dpid] = float('Inf')
 		previous[dpid] = None
+	# SRC DIST IS 0 TO IT'S SELF
 	distance[src] = 0
 	Q = set(switches)
 	print("Q=", Q)
 	while len(Q) > 0:
+		# CHOOSE THE NODE WITH LEAST DIST
 		u = minimum_distance(distance, Q)
 		Q.remove(u)
 		for p in switches:
 			if adjacency[u][p] is not None:
+				# FOR EVERY OTHER NODE
+				# CALCULATE NEW DIST AND SET IF LESS THAN BEFORE
 				w = 1
 				if distance[u] + w < distance[p]:
 					distance[p] = distance[u] + w
@@ -73,6 +79,7 @@ def get_path(src, dst, first_port, final_port):
 	p = dst
 	r.append(p)
 	q = previous[p]
+	# BUILD THE PATH BACKWARDS BASED ON PREVs CREATED BEFORE
 	while q is not None:
 		if q == src:
 			r.append(q)
@@ -80,7 +87,9 @@ def get_path(src, dst, first_port, final_port):
 		p = q
 		r.append(p)
 		q = previous[p]
+	# REVERSE THE PATH TO BE FROM SRC TO DST
 	r.reverse()
+	# IF THE PATH WAS A LOOP IGNORE PATH
 	if src == dst:
 		path = [src]
 	else:
@@ -88,6 +97,7 @@ def get_path(src, dst, first_port, final_port):
 	# Now add the ports
 	r = []
 	in_port = first_port
+	# SET IN AND OUT PORTS OF SWITCHES BASED ON ADJACENCY LIST OF PORTS
 	for s1, s2 in zip(path[:-1], path[1:]):
 		out_port = adjacency[s1][s2]
 		r.append((s1, in_port, out_port))
@@ -176,6 +186,8 @@ class ProjectController(app_manager.RyuApp):
 			return
 		dst = eth.dst
 		src = eth.src
+		# print("src=", src, " dst=", dst, " type=", hex(eth.ethertype))
+		# print("adjacency=", adjacency)
 		dpid = datapath.id
 		self.mac_to_port.setdefault(dpid, {})
 		if src not in mymac.keys():
