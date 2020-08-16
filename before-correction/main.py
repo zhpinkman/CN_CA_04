@@ -32,8 +32,8 @@ def main():
 
 
     net.start()
-    # threading.Thread(target=change_bw_timer_task, args=(net,)).start()
-    # threading.Thread(target=send_data_timer_task, args=(net,)).start()
+    threading.Thread(target=change_bw_timer_task, args=(net,)).start()
+    threading.Thread(target=send_data_timer_task, args=(net,)).start()
 
     print ("*** Running CLI")
     CLI(net)  # Bring up the mininet CLI
