@@ -242,6 +242,7 @@ class ProjectController(app_manager.RyuApp):
 		datapath = msg.datapath
 		ofproto = datapath.ofproto
 		parser = datapath.ofproto_parser
+		# INPUT PORT WHICH THIS PACKET CAME FROM
 		in_port = msg.match['in_port']
 		pkt = packet.Packet(msg.data)
 		eth = pkt.get_protocol(ethernet.ethernet)
@@ -249,18 +250,23 @@ class ProjectController(app_manager.RyuApp):
 		# avoid broadcast from LLDP Link Layer Discovery Protocol 
 		if eth.ethertype == 35020:
 			return
+		# PACKET SRC AND DST SWITCH MAC
 		dst = eth.dst
 		src = eth.src
 		# print("src=", src, " dst=", dst, " type=", hex(eth.ethertype))
 		# print("adjacency=", adjacency)
+
+		# ID OF THIS SWITCH IN DATAPATH
 		dpid = datapath.id
 		self.mac_to_port.setdefault(dpid, {})
 		if src not in mymac.keys():
 			mymac[src] = (dpid, in_port)
-		# print("mymac=", mymac)
+			print("NEW MAC:" , src, mymac[src])
+		# print("\n\nmymac=", mymac)
 		if dst in mymac.keys():
+			# ex. src = 5a:b2:d0:4f:af:45
 			p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
-			print("Path from", src, mymac[src][0], ":", mymac[src][1], "To", dst, mymac[dst][0], ":",  mymac[dst][1], "is ", end=" ")
+			print("***Path:", mymac[src][0], ":", mymac[src][1], "To", mymac[dst][0], ":",  mymac[dst][1], "is ", end=" ")
 			print(p)
 			self.install_path(p, ev, src, dst)
 			out_port = p[0][2]
