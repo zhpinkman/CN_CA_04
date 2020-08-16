@@ -141,79 +141,79 @@ class ProjectController(app_manager.RyuApp):
 		datapath.send_msg(mod)
 
 
-@set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
-def switch_features_handler(self, ev):
-	print("switch_features_handler is called")
-	datapath = ev.msg.datapath
-	ofproto = datapath.ofproto
-	parser = datapath.ofproto_parser
+	@set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
+	def switch_features_handler(self, ev):
+		print("switch_features_handler is called")
+		datapath = ev.msg.datapath
+		ofproto = datapath.ofproto
+		parser = datapath.ofproto_parser
 
-	match = parser.OFPMatch()
-	actions = [parser.OFPActionOutput(
-		ofproto.OFPP_CONTROLLER, ofproto.OFPCML_NO_BUFFER)]
-	inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
-	mod = datapath.ofproto_parser.OFPFlowMod(
-		datapath=datapath, match=match, cookie=0,
-		command=ofproto.OFPFC_ADD, idle_timeout=0, hard_timeout=0,
-		priority=0, instructions=inst)
-	datapath.send_msg(mod)
+		match = parser.OFPMatch()
+		actions = [parser.OFPActionOutput(
+			ofproto.OFPP_CONTROLLER, ofproto.OFPCML_NO_BUFFER)]
+		inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+		mod = datapath.ofproto_parser.OFPFlowMod(
+			datapath=datapath, match=match, cookie=0,
+			command=ofproto.OFPFC_ADD, idle_timeout=0, hard_timeout=0,
+			priority=0, instructions=inst)
+		datapath.send_msg(mod)
 
 
-@set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
-def _packet_in_handler(self, ev):
-	print("packet_in event:", ev.msg.datapath.id,
-		  " in_port:", ev.msg.match['in_port'])
-	msg = ev.msg
-	datapath = msg.datapath
-	ofproto = datapath.ofproto
-	parser = datapath.ofproto_parser
-	in_port = msg.match['in_port']
-	pkt = packet.Packet(msg.data)
-	eth = pkt.get_protocol(ethernet.ethernet)
-	# print "eth.ethertype=", eth.ethertype
-	# avodi broadcast from LLDP
-	if eth.ethertype == 35020:
-		return
-	dst = eth.dst
-	src = eth.src
-	dpid = datapath.id
-	self.mac_to_port.setdefault(dpid, {})
-	if src not in mymac.keys():
-		mymac[src] = (dpid, in_port)
-	# print "mymac=", mymac
-	if dst in mymac.keys():
-		p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
-		print(p)
-		self.install_path(p, ev, src, dst)
-		out_port = p[0][2]
-	else:
-		out_port = ofproto.OFPP_FLOOD
-	actions = [parser.OFPActionOutput(out_port)]
-	# install a flow to avoid packet_in next time
-	if out_port != ofproto.OFPP_FLOOD:
-		match = parser.OFPMatch(in_port=in_port, eth_src=src, eth_dst=dst)
-	data = None
-	if msg.buffer_id == ofproto.OFP_NO_BUFFER:
-		data = msg.data
-	out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data)
-	# datapath.send_msg(out)
+	@set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
+	def _packet_in_handler(self, ev):
+		print("packet_in event:", ev.msg.datapath.id,
+			" in_port:", ev.msg.match['in_port'])
+		msg = ev.msg
+		datapath = msg.datapath
+		ofproto = datapath.ofproto
+		parser = datapath.ofproto_parser
+		in_port = msg.match['in_port']
+		pkt = packet.Packet(msg.data)
+		eth = pkt.get_protocol(ethernet.ethernet)
+		# print "eth.ethertype=", eth.ethertype
+		# avodi broadcast from LLDP
+		if eth.ethertype == 35020:
+			return
+		dst = eth.dst
+		src = eth.src
+		dpid = datapath.id
+		self.mac_to_port.setdefault(dpid, {})
+		if src not in mymac.keys():
+			mymac[src] = (dpid, in_port)
+		# print "mymac=", mymac
+		if dst in mymac.keys():
+			p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
+			print(p)
+			self.install_path(p, ev, src, dst)
+			out_port = p[0][2]
+		else:
+			out_port = ofproto.OFPP_FLOOD
+		actions = [parser.OFPActionOutput(out_port)]
+		# install a flow to avoid packet_in next time
+		if out_port != ofproto.OFPP_FLOOD:
+			match = parser.OFPMatch(in_port=in_port, eth_src=src, eth_dst=dst)
+		data = None
+		if msg.buffer_id == ofproto.OFP_NO_BUFFER:
+			data = msg.data
+		out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data)
+		# datapath.send_msg(out)
 
-events = [event.EventSwitchEnter,
-			event.EventSwitchLeave, event.EventPortAdd,
-			event.EventPortDelete, event.EventPortModify,
-			event.EventLinkAdd, event.EventLinkDelete]
+	events = [event.EventSwitchEnter,
+				event.EventSwitchLeave, event.EventPortAdd,
+				event.EventPortDelete, event.EventPortModify,
+				event.EventLinkAdd, event.EventLinkDelete]
 
-@set_ev_cls(events)
-def get_topology_data(self, ev):
-	global switches
-	switch_list = get_switch(self.topology_api_app, None)
-	switches = [switch.dp.id for switch in switch_list]
-	self.datapath_list = [switch.dp for switch in switch_list]
-	# print "self.datapath_list=", self.datapath_list
-	print("switches=", switches)
-	links_list = get_link(self.topology_api_app, None)
-	mylinks = [(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no) for link in links_list]
-	for s1, s2, port1, port2 in mylinks:
-		adjacency[s1][s2] = port1
-		adjacency[s2][s1] = port2
-	# print s1,s2,port1,port2
+	@set_ev_cls(events)
+	def get_topology_data(self, ev):
+		global switches
+		switch_list = get_switch(self.topology_api_app, None)
+		switches = [switch.dp.id for switch in switch_list]
+		self.datapath_list = [switch.dp for switch in switch_list]
+		# print "self.datapath_list=", self.datapath_list
+		print("switches=", switches)
+		links_list = get_link(self.topology_api_app, None)
+		mylinks = [(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no) for link in links_list]
+		for s1, s2, port1, port2 in mylinks:
+			adjacency[s1][s2] = port1
+			adjacency[s2][s1] = port2
+		# print s1,s2,port1,port2
