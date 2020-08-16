@@ -47,7 +47,7 @@ def myNetwork():
     h3 = net.addHost('h3', cls=Host, ip='10.1.0.3',
                      mac='00:00:00:00:00:03', defaultRoute=None)
 
-    # Chicago
+    # DC-Chicago
     s1 = net.addHost('s1', cls=Host, ip='10.0.0.1',
                      mac='00:00:00:00:00:11', defaultRoute=None)  # file server
     s2 = net.addHost('s2', cls=Host, ip='10.0.0.2',
@@ -56,7 +56,7 @@ def myNetwork():
                      mac='00:00:00:00:00:13', defaultRoute=None)  # web server
     s4 = net.addHost('s4', cls=Host, ip='10.0.0.4',
                      mac='00:00:00:00:00:14', defaultRoute=None)  # backup server
-    # NewYork
+    # DC-NewYork
     s5 = net.addHost('s5', cls=Host, ip='10.0.1.1',
                      mac='00:00:00:00:00:21', defaultRoute=None)  # file server
     s6 = net.addHost('s6', cls=Host, ip='10.0.1.2',
@@ -65,7 +65,7 @@ def myNetwork():
                      mac='00:00:00:00:00:23', defaultRoute=None)  # web server
     s8 = net.addHost('s8', cls=Host, ip='10.0.1.4',
                      mac='00:00:00:00:00:24', defaultRoute=None)  # backup server
-    # Seattle
+    # DC-Seattle
     s9 = net.addHost('s9', cls=Host, ip='10.0.2.1',
                      mac='00:00:00:00:00:31', defaultRoute=None)  # file server
     s10 = net.addHost('s10', cls=Host, ip='10.0.2.2',
@@ -74,49 +74,51 @@ def myNetwork():
                       mac='00:00:00:00:00:33', defaultRoute=None)  # web server
     s12 = net.addHost('s12', cls=Host, ip='10.0.2.4',
                       mac='00:00:00:00:00:34', defaultRoute=None)  # backup server
+    
     info('*** Add links\n')
+    # DC-Chicago
     net.addLink(s1, sw1)
     net.addLink(s2, sw1)
     net.addLink(s3, sw2)
     net.addLink(s4, sw2)
-    net.addLink(sw1, sw3)
-    net.addLink(sw2, sw4)
-    net.addLink(sw2, sw3)
-    net.addLink(sw1, sw4)
-
+    net.addLink(sw1, sw3, bw=50)
+    net.addLink(sw2, sw4, bw=50)
+    net.addLink(sw2, sw3, bw=100)
+    net.addLink(sw1, sw4, bw=100)
+    # DC-New Yotk
     net.addLink(s5, sw5)
     net.addLink(s6, sw5)
     net.addLink(s7, sw6)
     net.addLink(s8, sw6)
-    net.addLink(sw5, sw7)
-    net.addLink(sw6, sw8)
-    net.addLink(sw6, sw7)
-    net.addLink(sw5, sw8)
-
+    net.addLink(sw5, sw7, bw=50)
+    net.addLink(sw6, sw8, bw=50)
+    net.addLink(sw6, sw7, bw=100)
+    net.addLink(sw5, sw8, bw=100)
+    # DC-Seattle
     net.addLink(s9, sw9)
     net.addLink(s10, sw9)
     net.addLink(s11, sw10)
     net.addLink(s12, sw10)
-    net.addLink(sw9, sw11)
-    net.addLink(sw10, sw12)
-    net.addLink(sw10, sw11)
-    net.addLink(sw9, sw12)
-
+    net.addLink(sw9, sw11, bw=50)
+    net.addLink(sw10, sw12, bw=50)
+    net.addLink(sw10, sw11, bw=100)
+    net.addLink(sw9, sw12, bw=100)
+    # hosts links
     net.addLink(h1, sw13)
     net.addLink(h2, sw14)
     net.addLink(h3, sw16)
 
-    net.addLink(sw3, sw13)
-    net.addLink(sw3, sw14)
-    net.addLink(sw4, sw14)
-    net.addLink(sw7, sw13)
-    net.addLink(sw7, sw14)
-    net.addLink(sw7, sw15)
-    net.addLink(sw8, sw15)
-    net.addLink(sw8, sw16)
-    net.addLink(sw11, sw14)
-    net.addLink(sw12, sw15)
-    net.addLink(sw12, sw16)
+    net.addLink(sw3, sw13, bw=15)
+    net.addLink(sw3, sw14, bw=10)
+    net.addLink(sw4, sw14, bw=5)
+    net.addLink(sw7, sw13, bw=15)
+    net.addLink(sw7, sw14, bw=20)
+    net.addLink(sw7, sw15, bw=5)
+    net.addLink(sw8, sw15, bw=10)
+    net.addLink(sw8, sw16, bw=15)
+    net.addLink(sw11, sw14, bw=10)
+    net.addLink(sw12, sw15, bw=15)
+    net.addLink(sw12, sw16, bw=10)
 
     info('*** Starting network\n')
     net.build()

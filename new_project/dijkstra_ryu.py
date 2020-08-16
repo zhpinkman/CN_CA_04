@@ -161,8 +161,8 @@ class ProjectController(app_manager.RyuApp):
 
 	@set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
 	def _packet_in_handler(self, ev):
-		print("packet_in event:", ev.msg.datapath.id,
-			" in_port:", ev.msg.match['in_port'])
+		# print("packet_in event:", ev.msg.datapath.id,
+		# 	" in_port:", ev.msg.match['in_port'])
 		msg = ev.msg
 		datapath = msg.datapath
 		ofproto = datapath.ofproto
@@ -196,7 +196,7 @@ class ProjectController(app_manager.RyuApp):
 		if msg.buffer_id == ofproto.OFP_NO_BUFFER:
 			data = msg.data
 		out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data)
-		# datapath.send_msg(out)
+		datapath.send_msg(out)
 
 	events = [event.EventSwitchEnter,
 				event.EventSwitchLeave, event.EventPortAdd,
