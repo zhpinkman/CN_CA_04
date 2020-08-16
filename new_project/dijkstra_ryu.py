@@ -37,6 +37,71 @@ mymac = {}
 # adjacency map [sw1][sw2]->port from sw1 to sw2
 adjacency = defaultdict(lambda: defaultdict(lambda: None))
 
+# BANDWIDTH
+def reverse_bw(b):
+	return 1/b
+# DEFAULT BW = 1
+bw = defaultdict(lambda: defaultdict(lambda: 1))
+# Chicago
+bw[1][3] = reverse_bw(50)
+bw[3][1] = reverse_bw(50)
+bw[2][4] = reverse_bw(50)
+bw[4][2] = reverse_bw(50)
+bw[1][4] = reverse_bw(100)
+bw[4][1] = reverse_bw(100)
+bw[2][3] = reverse_bw(100)
+bw[2][2] = reverse_bw(100)
+# NewYork
+bw[5][7] = reverse_bw(50)
+bw[7][5] = reverse_bw(50)
+bw[6][8] = reverse_bw(50)
+bw[8][6] = reverse_bw(50)
+bw[6][7] = reverse_bw(100)
+bw[7][6] = reverse_bw(100)
+bw[5][8] = reverse_bw(100)
+bw[8][5] = reverse_bw(100)
+# Seattle
+bw[9][11] = reverse_bw(50)
+bw[11][9] = reverse_bw(50)
+bw[10][12] = reverse_bw(50)
+bw[12][10] = reverse_bw(50)
+bw[10][11] = reverse_bw(100)
+bw[11][10] = reverse_bw(100)
+bw[9][12] = reverse_bw(100)
+bw[12][9] = reverse_bw(100)
+
+bw[3][13] = reverse_bw(15)
+bw[13][3] = reverse_bw(15)
+
+bw[3][14] = reverse_bw(10)
+bw[14][3] = reverse_bw(10)
+
+bw[4][14] = reverse_bw(5)
+bw[14][4] = reverse_bw(5)
+
+bw[7][13] = reverse_bw(15)
+bw[13][7] = reverse_bw(15)
+
+bw[7][14] = reverse_bw(20)
+bw[14][7] = reverse_bw(20)
+
+bw[7][15] = reverse_bw(5)
+bw[15][7] = reverse_bw(5)
+
+bw[8][15] = reverse_bw(10)
+bw[15][8] = reverse_bw(10)
+
+bw[8][16] = reverse_bw(15)
+bw[16][8] = reverse_bw(15)
+
+bw[11][14] = reverse_bw(10)
+bw[14][11] = reverse_bw(10)
+
+bw[12][15] = reverse_bw(15)
+bw[15][12] = reverse_bw(15)
+
+bw[12][16] = reverse_bw(10)
+bw[16][12] = reverse_bw(10)
 
 def minimum_distance(distance, Q):
 	# FIND THE NODE WITH MIN DIST IN Q
@@ -67,11 +132,13 @@ def get_path(src, dst, first_port, final_port):
 		# CHOOSE THE NODE WITH LEAST DIST
 		u = minimum_distance(distance, Q)
 		Q.remove(u)
+		print(u)
 		for p in switches:
 			if adjacency[u][p] is not None:
 				# FOR EVERY OTHER NODE
 				# CALCULATE NEW DIST AND SET IF LESS THAN BEFORE
-				w = 1
+				# w = 1
+				w = bw[u][p]
 				if distance[u] + w < distance[p]:
 					distance[p] = distance[u] + w
 					previous[p] = u
