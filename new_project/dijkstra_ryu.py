@@ -132,7 +132,6 @@ def get_path(src, dst, first_port, final_port):
 		# CHOOSE THE NODE WITH LEAST DIST
 		u = minimum_distance(distance, Q)
 		Q.remove(u)
-		print(u)
 		for p in switches:
 			if adjacency[u][p] is not None:
 				# FOR EVERY OTHER NODE
@@ -238,8 +237,7 @@ class ProjectController(app_manager.RyuApp):
 
 	@set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
 	def _packet_in_handler(self, ev):
-		# print("packet_in event:", ev.msg.datapath.id,
-		# 	" in_port:", ev.msg.match['in_port'])
+		# print("------------packet_in event:", ev.msg.datapath.id, " in_port:", ev.msg.match['in_port'])
 		msg = ev.msg
 		datapath = msg.datapath
 		ofproto = datapath.ofproto
@@ -248,7 +246,7 @@ class ProjectController(app_manager.RyuApp):
 		pkt = packet.Packet(msg.data)
 		eth = pkt.get_protocol(ethernet.ethernet)
 		# print "eth.ethertype=", eth.ethertype
-		# avodi broadcast from LLDP
+		# avoid broadcast from LLDP Link Layer Discovery Protocol 
 		if eth.ethertype == 35020:
 			return
 		dst = eth.dst
@@ -259,13 +257,15 @@ class ProjectController(app_manager.RyuApp):
 		self.mac_to_port.setdefault(dpid, {})
 		if src not in mymac.keys():
 			mymac[src] = (dpid, in_port)
-		# print "mymac=", mymac
+		# print("mymac=", mymac)
 		if dst in mymac.keys():
 			p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
+			print("Path from", src, mymac[src][0], ":", mymac[src][1], "To", dst, mymac[dst][0], ":",  mymac[dst][1], "is ", end=" ")
 			print(p)
 			self.install_path(p, ev, src, dst)
 			out_port = p[0][2]
 		else:
+			# FLOODING
 			out_port = ofproto.OFPP_FLOOD
 		actions = [parser.OFPActionOutput(out_port)]
 		# install a flow to avoid packet_in next time
