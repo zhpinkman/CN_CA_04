@@ -189,8 +189,12 @@ def _packet_in_handler(self, ev):
     out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data)
     datapath.send_msg(out)
 
+events = [event.EventSwitchEnter,
+            event.EventSwitchLeave, event.EventPortAdd,
+            event.EventPortDelete, event.EventPortModify,
+            event.EventLinkAdd, event.EventLinkDelete]
 
-@set_ev_cls(event.EventSwitchEnter)
+@set_ev_cls(events)
 def get_topology_data(self, ev):
     global switches
     switch_list = get_switch(self.topology_api_app, None)
