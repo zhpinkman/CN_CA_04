@@ -28,7 +28,7 @@ def main():
     global running
     print("-------------------------HELLO-----------------------")
     topo = Topology()
-    net = Mininet(topo=topo,controller=POX, link=TCLink, switch=OVSSwitch, ipBase='10.0.0.0/8')
+    net = Mininet(topo=topo, link=TCLink, switch=OVSSwitch, ipBase='10.0.0.0/8')
 
 
     net.start()
