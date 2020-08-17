@@ -208,6 +208,7 @@ class ProjectController(app_manager.RyuApp):
 		datapath = msg.datapath
 		ofproto = datapath.ofproto
 		parser = datapath.ofproto_parser
+		# SWITCH IN_PORT OUT_PORT FROM DIJKSTRA
 		for sw, in_port, out_port in p:
 			print(src_mac,"->", dst_mac, "via ", sw, " in_port=", in_port, " out_port=", out_port)
 			match = parser.OFPMatch(
@@ -218,7 +219,7 @@ class ProjectController(app_manager.RyuApp):
 				ofproto.OFPIT_APPLY_ACTIONS, actions)]
 			mod = datapath.ofproto_parser.OFPFlowMod(
 				datapath=datapath, match=match, idle_timeout=0, hard_timeout=0, priority=1, instructions=inst)
-		datapath.send_msg(mod)
+			datapath.send_msg(mod)
 
 
 	@set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
