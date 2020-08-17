@@ -172,6 +172,7 @@ def get_path(src, dst, first_port, final_port):
 		out_port = adjacency[s1][s2]
 		r.append((s1, in_port, out_port))
 		in_port = adjacency[s2][s1]
+	# APPENDS THE DESTINATION SWITCH WITH ITS INPUT AND OUTPUT PORT 
 	r.append((dst, in_port, final_port))
 	return r
 
@@ -201,6 +202,7 @@ class ProjectController(app_manager.RyuApp):
 			priority=ofproto.OFP_DEFAULT_PRIORITY, instructions=inst)
 		datapath.send_msg(mod)
 
+	# CALLED UPON PATH IS DETERMINED AND WE WANT IT TO BE INSTALLED IN SWITCHES' FLOW TABLES
 	def install_path(self, p, ev, src_mac, dst_mac):
 		print("install_path is called")
 		# print "p=", p, " src_mac=", src_mac, " dst_mac=", dst_mac
@@ -211,8 +213,10 @@ class ProjectController(app_manager.RyuApp):
 		# SWITCH IN_PORT OUT_PORT FROM DIJKSTRA
 		for sw, in_port, out_port in p:
 			print(src_mac,"->", dst_mac, "via ", sw, " in_port=", in_port, " out_port=", out_port)
+			# FIND THE SWITCH MATCHING OUR SETTING FOR SWITCH ID AND MAC ADDRESSES
 			match = parser.OFPMatch(
 				in_port=in_port, eth_src=src_mac, eth_dst=dst_mac)
+			# ADD THE ACTION TO BE DONE IN FOREMENTIONED CIRCUMSTANCES WHICH IS ADDING THE OUT PUT PORT	
 			actions = [parser.OFPActionOutput(out_port)]
 			datapath = self.datapath_list[int(sw) - 1]
 			inst = [parser.OFPInstructionActions(
@@ -221,7 +225,7 @@ class ProjectController(app_manager.RyuApp):
 				datapath=datapath, match=match, idle_timeout=0, hard_timeout=0, priority=1, instructions=inst)
 			datapath.send_msg(mod)
 
-
+	# CALLED UPON SWITCH CONFIGURATION IN THE NETWORK
 	@set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
 	def switch_features_handler(self, ev):
 		print("switch_features_handler is called")
@@ -271,6 +275,7 @@ class ProjectController(app_manager.RyuApp):
 		self.mac_to_port.setdefault(dpid, {})
 		if src not in mymac.keys():
 			# IF WE DON'T KNOW SRC YET ADD IT
+			# ADD MAC ADDRESS OF EACH PORT OF SWITCHES EIGHTER FOR HOSTS OR COMMUNICATION BETWEEN SWITCHES
 			mymac[src] = (dpid, in_port)
 			print("NEW MAC: (DATAPATH_ID, ONE OF THIS SWITCH PORTS ID) =" , src, mymac[src])
 		# print("\n\nmymac=", mymac)
@@ -319,7 +324,8 @@ class ProjectController(app_manager.RyuApp):
 		links_list = get_link(self.topology_api_app, None)
 		mylinks = [(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no) for link in links_list]
 		# CREATE adjacency map [sw1][sw2]->port from sw1 to sw2
+		# PORTS ARE THE OUTPUT PORTS FOR THE SWITCHES
 		for s1, s2, port1, port2 in mylinks:
 			adjacency[s1][s2] = port1
 			adjacency[s2][s1] = port2
-		# print s1,s2,port1,port2
+			print (s1,s2,port1,port2)
