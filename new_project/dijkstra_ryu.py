@@ -242,12 +242,17 @@ class ProjectController(app_manager.RyuApp):
 	@set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
 	def _packet_in_handler(self, ev):
 		# print("------------packet_in event:", ev.msg.datapath.id, " in_port:", ev.msg.match['in_port'])
+		# msg: An object which describes the corresponding OpenFlow message.
 		msg = ev.msg
+		# msg.datapath: A ryu.controller.controller.Datapath instance which describes an OpenFlow switch from which we received this OpenFlow message.
 		datapath = msg.datapath
+		# ofproto: A module which exports OpenFlow definitions, mainly constants appeared in the specification, for the negotiated OpenFlow version. For example, ryu.ofproto.ofproto_v1_0 for OpenFlow 1.0.
 		ofproto = datapath.ofproto
+		# ofproto_parser: A module which exports OpenFlow wire message encoder and decoder for the negotiated OpenFlow version. For example, ryu.ofproto.ofproto_v1_0_parser for OpenFlow 1.0.
 		parser = datapath.ofproto_parser
 		# INPUT PORT WHICH THIS PACKET CAME FROM
 		in_port = msg.match['in_port']
+		# CREATE PACKET FROM MSG.DATA TO ACCESS ETH TYPE
 		pkt = packet.Packet(msg.data)
 		eth = pkt.get_protocol(ethernet.ethernet)
 		# print "eth.ethertype=", eth.ethertype
@@ -264,10 +269,12 @@ class ProjectController(app_manager.RyuApp):
 		dpid = datapath.id
 		self.mac_to_port.setdefault(dpid, {})
 		if src not in mymac.keys():
+			# IF WE DON'T KNOW SRC YET ADD IT
 			mymac[src] = (dpid, in_port)
 			print("NEW MAC: (DATAPATH_ID, ONE OF THIS SWITCH PORTS ID) =" , src, mymac[src])
 		# print("\n\nmymac=", mymac)
 		if dst in mymac.keys():
+			# IF WE KNOW IN WHICH SWITCH AND PORT DST IS LOCATED
 			# ex. src = 5a:b2:d0:4f:af:45
 			p = get_path(mymac[src][0], mymac[dst][0], mymac[src][1], mymac[dst][1])
 			print("***Path:", mymac[src][0], ":", mymac[src][1], "To", mymac[dst][0], ":",  mymac[dst][1], "is ", end=" ")
@@ -275,16 +282,21 @@ class ProjectController(app_manager.RyuApp):
 			self.install_path(p, ev, src, dst)
 			out_port = p[0][2]
 		else:
+			# IF WE DON'T KNOW WHERE DST IS THEN FLOOD
 			# FLOODING
 			out_port = ofproto.OFPP_FLOOD
+		# ofproto_parser.OFPxxxx(datapath,...): A callable to prepare an OpenFlow message for the given switch. It can be sent with Datapath.send_msg later. xxxx is a name of the message. For example OFPFlowMod for flow-mod message. Arguemnts depend on the message.
 		actions = [parser.OFPActionOutput(out_port)]
 		# install a flow to avoid packet_in next time
 		if out_port != ofproto.OFPP_FLOOD:
+			# ofproto_parser.OFPxxxx(datapath,...): A callable to prepare an OpenFlow message for the given switch. It can be sent with Datapath.send_msg later. xxxx is a name of the message. For example OFPFlowMod for flow-mod message. Arguemnts depend on the message.
 			match = parser.OFPMatch(in_port=in_port, eth_src=src, eth_dst=dst)
 		data = None
 		if msg.buffer_id == ofproto.OFP_NO_BUFFER:
 			data = msg.data
+		# ofproto_parser.OFPxxxx(datapath,...): A callable to prepare an OpenFlow message for the given switch. It can be sent with Datapath.send_msg later. xxxx is a name of the message. For example OFPFlowMod for flow-mod message. Arguemnts depend on the message.
 		out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data)
+		# send_msg(self, msg): Queue an OpenFlow message to send to the corresponding switch. If msg.xid is None, set_xid is automatically called on the message before queueing.
 		datapath.send_msg(out)
 
 	events = [event.EventSwitchEnter,
