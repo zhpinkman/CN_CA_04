@@ -192,10 +192,17 @@ class ProjectController(app_manager.RyuApp):
 
 	def add_flow(self, datapath, in_port, dst, actions):
 		ofproto = datapath.ofproto
+		# 		Features request message
+
+		# The controller sends a feature request to the switch upon session establishment.
+
+		# This message is handled by the Ryu framework, so the Ryu application do not need to process this typically.
 		parser = datapath.ofproto_parser
 		match = datapath.ofproto_parser.OFPMatch(in_port=in_port, eth_dst=dst)
 		inst = [parser.OFPInstructionActions(
 			ofproto.OFPIT_APPLY_ACTIONS, actions)]
+		# Modify Flow entry message
+		# The controller sends this message to modify the flow table.
 		mod = datapath.ofproto_parser.OFPFlowMod(
 			datapath=datapath, match=match, cookie=0,
 			command=ofproto.OFPFC_ADD, idle_timeout=0, hard_timeout=0,
@@ -209,6 +216,11 @@ class ProjectController(app_manager.RyuApp):
 		msg = ev.msg
 		datapath = msg.datapath
 		ofproto = datapath.ofproto
+		# 		Features request message
+
+		# The controller sends a feature request to the switch upon session establishment.
+
+		# This message is handled by the Ryu framework, so the Ryu application do not need to process this typically.
 		parser = datapath.ofproto_parser
 		# SWITCH IN_PORT OUT_PORT FROM DIJKSTRA
 		for sw, in_port, out_port in p:
@@ -216,13 +228,17 @@ class ProjectController(app_manager.RyuApp):
 			# FIND THE SWITCH MATCHING OUR SETTING FOR SWITCH ID AND MAC ADDRESSES
 			match = parser.OFPMatch(
 				in_port=in_port, eth_src=src_mac, eth_dst=dst_mac)
-			# ADD THE ACTION TO BE DONE IN FOREMENTIONED CIRCUMSTANCES WHICH IS ADDING THE OUT PUT PORT	
+			# GENERATE THE ACTION TO BE DONE IN FOREMENTIONED CIRCUMSTANCES WHICH IS ADDING THE OUT PUT PORT
 			actions = [parser.OFPActionOutput(out_port)]
+			# FIND THE ACCORDING SWITCH 
 			datapath = self.datapath_list[int(sw) - 1]
+			# APPLY THE GENERATED ACTION
 			inst = [parser.OFPInstructionActions(
 				ofproto.OFPIT_APPLY_ACTIONS, actions)]
+			
 			mod = datapath.ofproto_parser.OFPFlowMod(
 				datapath=datapath, match=match, idle_timeout=0, hard_timeout=0, priority=1, instructions=inst)
+			# SEND THE OPENFLOW ITEM (BROADCASTING)
 			datapath.send_msg(mod)
 
 	# CALLED UPON SWITCH CONFIGURATION IN THE NETWORK
@@ -231,12 +247,20 @@ class ProjectController(app_manager.RyuApp):
 		print("switch_features_handler is called")
 		datapath = ev.msg.datapath
 		ofproto = datapath.ofproto
+		# 		Features request message
+
+		# The controller sends a feature request to the switch upon session establishment.
+
+		# This message is handled by the Ryu framework, so the Ryu application do not need to process this typically.
 		parser = datapath.ofproto_parser
 
+		# MATCH CERTAIN SETTINGS FOR THE SWITCH FLOW TABLE TO BE MODIFIED
 		match = parser.OFPMatch()
 		actions = [parser.OFPActionOutput(
 			ofproto.OFPP_CONTROLLER, ofproto.OFPCML_NO_BUFFER)]
 		inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+		# Modify Flow entry message
+		# The controller sends this message to modify the flow table.
 		mod = datapath.ofproto_parser.OFPFlowMod(
 			datapath=datapath, match=match, cookie=0,
 			command=ofproto.OFPFC_ADD, idle_timeout=0, hard_timeout=0,
@@ -254,6 +278,11 @@ class ProjectController(app_manager.RyuApp):
 		# ofproto: A module which exports OpenFlow definitions, mainly constants appeared in the specification, for the negotiated OpenFlow version. For example, ryu.ofproto.ofproto_v1_0 for OpenFlow 1.0.
 		ofproto = datapath.ofproto
 		# ofproto_parser: A module which exports OpenFlow wire message encoder and decoder for the negotiated OpenFlow version. For example, ryu.ofproto.ofproto_v1_0_parser for OpenFlow 1.0.
+		# 		Features request message
+
+		# The controller sends a feature request to the switch upon session establishment.
+
+		# This message is handled by the Ryu framework, so the Ryu application do not need to process this typically.
 		parser = datapath.ofproto_parser
 		# INPUT PORT WHICH THIS PACKET CAME FROM
 		in_port = msg.match['in_port']
