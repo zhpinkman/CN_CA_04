@@ -231,7 +231,8 @@ class ProjectController(app_manager.RyuApp):
 			# GENERATE THE ACTION TO BE DONE IN FOREMENTIONED CIRCUMSTANCES WHICH IS ADDING THE OUT PUT PORT
 			actions = [parser.OFPActionOutput(out_port)]
 			# FIND THE ACCORDING SWITCH 
-			datapath = self.datapath_list[int(sw) - 1]
+			# datapath = self.datapath_list[int(sw) - 1]
+			datapath = next(d for d in self.datapath_list if d.id == sw)
 			# APPLY THE GENERATED ACTION
 			inst = [parser.OFPInstructionActions(
 				ofproto.OFPIT_APPLY_ACTIONS, actions)]
