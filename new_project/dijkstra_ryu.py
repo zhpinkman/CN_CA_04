@@ -132,26 +132,30 @@ def get_path(src, dst, first_port, final_port):
 		# CHOOSE THE NODE WITH LEAST DIST
 		u = minimum_distance(distance, Q)
 		Q.remove(u)
+		# UPDATE COSTS OF ADJACENT NODES TO NODE u
+		# FOR EVERY OTHER NODE
+		# CALCULATE NEW DIST AND SET IF LESS THAN BEFORE
 		for p in switches:
 			if adjacency[u][p] is not None:
-				# FOR EVERY OTHER NODE
-				# CALCULATE NEW DIST AND SET IF LESS THAN BEFORE
-				# w = 1
 				w = bw[u][p]
 				if distance[u] + w < distance[p]:
+					# KEEP UPDATING DISTANCE VECTOR ACCORDING TO UPDATED NODES
 					distance[p] = distance[u] + w
+					# KEEP UPDATING PREVIOUS VECTOR ACCORDING TO UPDATED NODES
 					previous[p] = u
+	# GENERATING THE VECTOR CONTAINING PATH FROM THE SOURCE TO DESTINATION RECURSIVELY
 	r = []
 	p = dst
 	r.append(p)
 	q = previous[p]
-	# BUILD THE PATH BACKWARDS BASED ON PREVs CREATED BEFORE
+	# UP UNTIL REACHING THE SOURCE NODE
 	while q is not None:
 		if q == src:
 			r.append(q)
 			break
 		p = q
 		r.append(p)
+		# GETTING THE NODE BEFORE NODE p
 		q = previous[p]
 	# REVERSE THE PATH TO BE FROM SRC TO DST
 	r.reverse()
@@ -294,6 +298,7 @@ class ProjectController(app_manager.RyuApp):
 		# GET SWITCHES IDS FROM TOPOLOGY
 		switch_list = get_switch(self.topology_api_app, None)
 		switches = [switch.dp.id for switch in switch_list]
+		print("raw switches data: ", switches)
 		self.datapath_list = [switch.dp for switch in switch_list]
 		# print "self.datapath_list=", self.datapath_list
 		print("switches=", switches)
