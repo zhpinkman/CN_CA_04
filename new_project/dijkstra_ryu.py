@@ -103,17 +103,17 @@ bw[15][12] = reverse_bw(15)
 bw[12][16] = reverse_bw(10)
 bw[16][12] = reverse_bw(10)
 
+# FIND THE NODE WITH MIN DIST IN Q
 def minimum_distance(distance, Q):
-	# FIND THE NODE WITH MIN DIST IN Q
-	min = float('Inf')
+	min_dist = float('Inf')
 	node = 0
 	for v in Q:
-		if distance[v] < min:
-			min = distance[v]
+		if distance[v] < min_dist:
+			min_dist = distance[v]
 			node = v
 	return node
 
-
+# GET THE PATH FROM SOURCE TO DESTINATION REGARDING FIRST AND FINAL PORT
 def get_path(src, dst, first_port, final_port):
 	# Dijkstra's algorithm
 	print("get_path is called, src=", src, " dst=", dst,
@@ -121,9 +121,9 @@ def get_path(src, dst, first_port, final_port):
 	# INIT DIST AND PREV
 	distance = {}
 	previous = {}
-	for dpid in switches:
-		distance[dpid] = float('Inf')
-		previous[dpid] = None
+	for switch_id in switches:
+		distance[switch_id] = float('Inf')
+		previous[switch_id] = None
 	# SRC DIST IS 0 TO IT'S SELF
 	distance[src] = 0
 	Q = set(switches)
