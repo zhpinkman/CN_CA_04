@@ -235,7 +235,8 @@ class ProjectController(app_manager.RyuApp):
 			# APPLY THE GENERATED ACTION
 			inst = [parser.OFPInstructionActions(
 				ofproto.OFPIT_APPLY_ACTIONS, actions)]
-			
+			# Modify Flow entry message
+			# The controller sends this message to modify the flow table.
 			mod = datapath.ofproto_parser.OFPFlowMod(
 				datapath=datapath, match=match, idle_timeout=0, hard_timeout=0, priority=1, instructions=inst)
 			# SEND THE OPENFLOW ITEM (BROADCASTING)
